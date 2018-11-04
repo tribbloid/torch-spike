@@ -1,0 +1,4 @@
+six
+tqdm
+torch>=0.4.1
+future
