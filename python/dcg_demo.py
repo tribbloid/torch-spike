@@ -28,9 +28,9 @@ class DynamicNet(torch.nn.Module):
     times when defining a computational graph. This is a big improvement from Lua
     Torch, where each Module could be used only once.
     """
-        h_relu = self.input_linear(x).clamp(min=0)
+        h_relu = self.input_linear.__call__(x).clamp(min=0)
         for _ in range(random.randint(0, 3)):
-            h_relu = self.middle_linear(h_relu).clamp(min=0)
+            h_relu = self.middle_linear.__call__(h_relu).clamp(min=0)
         y_pred = self.output_linear(h_relu)
         return y_pred
 
