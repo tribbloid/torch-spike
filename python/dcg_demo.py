@@ -10,9 +10,9 @@ class DynamicNet(torch.nn.Module):
     in the forward pass.
     """
         super(DynamicNet, self).__init__()
-        self.input_linear = torch.nn.Linear(D_in, H)
-        self.middle_linear = torch.nn.Linear(H, H)
-        self.output_linear = torch.nn.Linear(H, D_out)
+        self.input_linear = torch.nn.Linear(D_in, H).cuda()
+        self.middle_linear = torch.nn.Linear(H, H).cuda()
+        self.output_linear = torch.nn.Linear(H, D_out).cuda()
 
     def forward(self, x):
         """
@@ -35,13 +35,15 @@ class DynamicNet(torch.nn.Module):
         return y_pred
 
 
+assert torch.cuda.is_available()
+
 # N is batch size; D_in is input dimension;
 # H is hidden dimension; D_out is output dimension.
 N, D_in, H, D_out = 64, 1000, 100, 10
 
 # Create random Tensors to hold inputs and outputs.
-x = torch.randn(N, D_in)
-y = torch.randn(N, D_out)
+x = torch.randn(N, D_in).cuda()
+y = torch.randn(N, D_out).cuda()
 
 # Construct our model by instantiating the class defined above
 model = DynamicNet(D_in, H, D_out)
