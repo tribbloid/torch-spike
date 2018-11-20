@@ -93,7 +93,7 @@ def get_batch(source, label_data, i, batch_size=32):
     data = source[i:i + bb_size]
     target = label_data[i:i + bb_size]
     #print(target.shape)
-    return data, target.reshape((-1, ))
+    return data, target.reshape((-1,))
 
 
 #%%

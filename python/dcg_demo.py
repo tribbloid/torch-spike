@@ -4,6 +4,7 @@ import torch
 
 
 class DynamicNet(torch.nn.Module):
+
     def __init__(self, D_in, H, D_out):
         """
     In the constructor we construct three nn.Linear instances that we will use

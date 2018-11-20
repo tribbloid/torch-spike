@@ -1,4 +1,3 @@
-
 # %%
 # simple UnRollredRNN_Model
 
@@ -12,28 +11,45 @@ from g_rnn.shared import *
 #
 # Training sequence 2 sequence models using Gluon API
 
+
 # %%
 # Class to create model objects.
 class GluonRNNModel(gluon.Block):
     """A model with an encoder, recurrent layer, and a decoder."""
 
-    def __init__(self, mode, vocab_size, num_embed, num_hidden,
-                 num_layers, dropout=0.5, **kwargs):
+    def __init__(self,
+                 mode,
+                 vocab_size,
+                 num_embed,
+                 num_hidden,
+                 num_layers,
+                 dropout=0.5,
+                 **kwargs):
         super(GluonRNNModel, self).__init__(**kwargs)
         with self.name_scope():
             self.drop = nn.Dropout(dropout)
-            self.encoder = nn.Embedding(vocab_size, num_embed,
-                                        weight_initializer=mx.init.Uniform(0.1))
+            self.encoder = nn.Embedding(
+                vocab_size, num_embed, weight_initializer=mx.init.Uniform(0.1))
 
             if mode == 'lstm':
-                self.rnn = rnn.LSTM(num_hidden, num_layers, dropout=dropout,
-                                    input_size=num_embed)
+                self.rnn = rnn.LSTM(
+                    num_hidden,
+                    num_layers,
+                    dropout=dropout,
+                    input_size=num_embed)
             elif mode == 'gru':
-                self.rnn = rnn.GRU(num_hidden, num_layers, dropout=dropout,
-                                   input_size=num_embed)
+                self.rnn = rnn.GRU(
+                    num_hidden,
+                    num_layers,
+                    dropout=dropout,
+                    input_size=num_embed)
             else:
-                self.rnn = rnn.RNN(num_hidden, num_layers, activation='relu', dropout=dropout,
-                                   input_size=num_embed)
+                self.rnn = rnn.RNN(
+                    num_hidden,
+                    num_layers,
+                    activation='relu',
+                    dropout=dropout,
+                    input_size=num_embed)
             self.decoder = nn.Dense(vocab_size, in_units=num_hidden)
             self.num_hidden = num_hidden
 
@@ -68,15 +84,14 @@ rnn_save = 'checkpoints/gluonlstm_abc'  # checkpoints/gluonlstm_2 (prepared for 
 
 # %%
 # GluonRNNModel
-model = GluonRNNModel(mode, vocab_size, embedsize, hididen_units,
-                      number_layers, dropout)
+model = GluonRNNModel(mode, vocab_size, embedsize, hididen_units, number_layers,
+                      dropout)
 # initalise the weights of models to random weights
 model.collect_params().initialize(mx.init.Xavier(), ctx=context)
 # Adam trainer
 trainer = gluon.Trainer(model.collect_params(), 'adam')
 # softmax cros entropy loss
 loss = gluon.loss.SoftmaxCrossEntropyLoss()
-
 
 # %%
 
@@ -104,8 +119,8 @@ train_data_rnn_gluon = rnn_batch(idx_nd, batch_size).as_in_context(context)
 # get the batch
 def get_batch(source, i, seq):
     seq_len = min(seq, source.shape[0] - 1 - i)
-    data = source[i: i + seq_len]
-    target = source[i + 1: i + 1 + seq_len]
+    data = source[i:i + seq_len]
+    target = source[i + 1:i + 1 + seq_len]
     return data, target.reshape((-1,))
 
 
@@ -122,13 +137,17 @@ def detach(hidden):
 def trainGluonRNN(epochs, train_data, seq=seq_length):
     for epoch in range(epochs):
         total_L = 0.0
-        hidden = model.begin_state(func=mx.nd.zeros, batch_size=batch_size, ctx=context)
-        for ibatch, i in enumerate(range(0, train_data.shape[0] - 1, seq_length)):
+        hidden = model.begin_state(
+            func=mx.nd.zeros, batch_size=batch_size, ctx=context)
+        for ibatch, i in enumerate(
+                range(0, train_data.shape[0] - 1, seq_length)):
             data, target = get_batch(train_data, i, seq)
             hidden = detach(hidden)
             with autograd.record():
                 output, hidden = model(data, hidden)
-                L = loss(output, target)  # this is total loss associated with seq_length
+                L = loss(
+                    output,
+                    target)  # this is total loss associated with seq_length
                 L.backward()
 
             grads = [i.grad(context) for i in model.collect_params().values()]
@@ -163,9 +182,9 @@ def evaluate_seq2seq(model, input_string, seq_length, batch_size):
     idx = [char_indices[c] for c in input_string]
     if (len(input_string) != seq_length):
         raise ValueError("input string should be equal to sequence length")
-    hidden = model.begin_state(func=mx.nd.zeros, batch_size=batch_size, ctx=context)
-    sample_input = mx.nd.array(np.array([idx[0:seq_length]]).T
-                               , ctx=context)
+    hidden = model.begin_state(
+        func=mx.nd.zeros, batch_size=batch_size, ctx=context)
+    sample_input = mx.nd.array(np.array([idx[0:seq_length]]).T, ctx=context)
     output, hidden = model(sample_input, hidden)
     index = mx.nd.argmax(output, axis=1)
     index = index.asnumpy()
@@ -190,18 +209,19 @@ mapInput(test_input, result)
 
 # %%
 # a nietzsche like text generator
-def generate_random_text(model, input_string, seq_length, batch_size, sentence_length):
+def generate_random_text(model, input_string, seq_length, batch_size,
+                         sentence_length):
     count = 0
     new_string = ''
     cp_input_string = input_string
-    hidden = model.begin_state(func=mx.nd.zeros, batch_size=batch_size, ctx=context)
+    hidden = model.begin_state(
+        func=mx.nd.zeros, batch_size=batch_size, ctx=context)
     while count < sentence_length:
         idx = [char_indices[c] for c in input_string]
         if (len(input_string) != seq_length):
             print(len(input_string))
             raise ValueError('there was a error in the input ')
-        sample_input = mx.nd.array(np.array([idx[0:seq_length]]).T
-                                   , ctx=context)
+        sample_input = mx.nd.array(np.array([idx[0:seq_length]]).T, ctx=context)
         output, hidden = model(sample_input, hidden)
         index = mx.nd.argmax(output, axis=1)
         index = index.asnumpy()
@@ -212,7 +232,7 @@ def generate_random_text(model, input_string, seq_length, batch_size, sentence_l
 
 
 # %%
-generate_random_text(model,
-                     "probably the time is at hand when it will be once and again understood WHAT has actually sufficed an",
-                     seq_length, 1, 200)
-
+generate_random_text(
+    model,
+    "probably the time is at hand when it will be once and again understood WHAT has actually sufficed an",
+    seq_length, 1, 200)
